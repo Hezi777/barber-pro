@@ -71,21 +71,21 @@ export default function CalendarDayView({ appointments }: CalendarDayViewProps) 
   );
 
   return (
-    <div className="bg-[#1a1a1a] rounded-xl border border-white/5 overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="relative">
         <div className="relative">
           {timeSlots.map((time) => (
             <div
               key={time}
-              className="flex items-start border-b border-white/5"
+              className="flex items-start border-b border-border/70"
               style={{ height: `${SLOT_HEIGHT}px` }}
             >
-              <div className="w-20 flex-shrink-0 py-2 px-4 text-sm text-white/40 font-medium tabular-nums">
+              <div className="w-20 flex-shrink-0 px-4 py-2 text-sm font-medium tabular-nums text-muted-foreground">
                 {time}
               </div>
 
               <div className="flex-1 relative h-full">
-                <div className="absolute inset-0 border-r border-white/5" />
+                <div className="absolute inset-0 border-r border-border/70" />
               </div>
             </div>
           ))}
@@ -115,7 +115,7 @@ export default function CalendarDayView({ appointments }: CalendarDayViewProps) 
                         <div className={`font-semibold text-sm ${isConfirmed ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
                           {appointment.customer_name}
                         </div>
-                        <div className="text-xs text-white/60 mt-0.5">{appointment.service}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{appointment.service}</div>
                       </div>
 
                       <div className="flex items-center justify-between mt-2">

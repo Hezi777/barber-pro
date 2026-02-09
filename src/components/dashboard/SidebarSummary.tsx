@@ -65,19 +65,19 @@ export function SidebarSummary({
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5">
+      <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={handlePreviousMonth}
-            className="p-1.5 rounded-md text-white/60 hover:text-white/90 hover:bg-white/5 transition-all"
+            className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
             aria-label="Previous month"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="text-sm font-medium text-white/90">{monthName}</div>
+          <div className="text-sm font-medium">{monthName}</div>
           <button
             onClick={handleNextMonth}
-            className="p-1.5 rounded-md text-white/60 hover:text-white/90 hover:bg-white/5 transition-all"
+            className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
             aria-label="Next month"
           >
             <ChevronRight className="w-4 h-4" />
@@ -86,7 +86,7 @@ export function SidebarSummary({
 
         <div className="grid grid-cols-7 gap-1 mb-2">
           {WEEKDAYS.map((day, index) => (
-            <div key={`${day}-${index}`} className="text-center text-xs text-white/40 font-medium py-1">
+            <div key={`${day}-${index}`} className="py-1 text-center text-xs font-medium text-muted-foreground">
               {day}
             </div>
           ))}
@@ -115,10 +115,10 @@ export function SidebarSummary({
                 onClick={() => handleDayClick(day)}
                 className={`aspect-square rounded-lg text-sm font-medium transition-all ${
                   isSelected
-                    ? "bg-[#dc2626] text-white"
+                    ? "bg-primary text-primary-foreground"
                     : isToday
-                      ? "bg-white/10 text-white/90 hover:bg-white/15"
-                      : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 }`}
               >
                 {day}
@@ -128,61 +128,61 @@ export function SidebarSummary({
         </div>
       </div>
 
-      <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5">
-        <h3 className="text-xs font-medium text-white/50 mb-3">Next appointment</h3>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h3 className="mb-3 text-xs font-medium text-muted-foreground">Next appointment</h3>
         <div className="space-y-2">
           <div className="text-2xl font-semibold">
             {loading ? "--:--" : nextAppointment ? formatTimeLabel(nextAppointment.start_time) : "--:--"}
           </div>
           <div className="text-sm font-medium">{loading ? "Loading..." : nextAppointment?.customer_name ?? "No bookings"}</div>
-          <div className="text-xs text-white/60">{loading ? " " : nextAppointment?.service ?? " "}</div>
-          <div className="flex items-center gap-1.5 text-xs text-white/40 pt-1">
+          <div className="text-xs text-muted-foreground">{loading ? " " : nextAppointment?.service ?? " "}</div>
+          <div className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground">
             <Timer className="w-3.5 h-3.5" />
             <span>{loading ? "Fetching..." : getRelativeTimeLabel(nextAppointment)}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5">
+      <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs text-white/50 mb-1">Total appointments</div>
+            <div className="mb-1 text-xs text-muted-foreground">Total appointments</div>
             <div className="text-2xl font-semibold">{loading ? "-" : totalAppointments}</div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-[#dc2626]/10 flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-[#dc2626]" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Calendar className="h-5 w-5 text-primary" />
           </div>
         </div>
       </div>
 
-      <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5">
+      <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs text-white/50 mb-1">Available hours</div>
+            <div className="mb-1 text-xs text-muted-foreground">Available hours</div>
             <div className="text-2xl font-semibold">{loading ? "-" : freeHoursLabel}</div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-white/40" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/70">
+            <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
         </div>
       </div>
 
-      <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5">
-        <h3 className="text-xs font-medium text-white/50 mb-3">Upcoming free slots</h3>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h3 className="mb-3 text-xs font-medium text-muted-foreground">Upcoming free slots</h3>
         <div className="space-y-2">
           {loading ? (
-            <div className="px-3 py-2 bg-white/[0.03] border border-white/5 rounded-lg text-center text-sm font-medium tabular-nums">
+            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-center text-sm font-medium tabular-nums">
               Loading...
             </div>
           ) : upcomingFreeSlots.length === 0 ? (
-            <div className="px-3 py-2 bg-white/[0.03] border border-white/5 rounded-lg text-center text-sm font-medium tabular-nums">
+            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-center text-sm font-medium tabular-nums">
               Fully booked
             </div>
           ) : (
             upcomingFreeSlots.map((slot) => (
               <div
                 key={slot}
-                className="px-3 py-2 bg-white/[0.03] border border-white/5 rounded-lg text-center text-sm font-medium tabular-nums"
+                className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-center text-sm font-medium tabular-nums"
               >
                 {slot}
               </div>

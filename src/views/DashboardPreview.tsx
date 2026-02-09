@@ -100,7 +100,7 @@ export default function DashboardPreview() {
   }, [visibleAppointments]);
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <TopBar
         selectedDate={selectedDate}
         onRefresh={() => {
@@ -113,11 +113,11 @@ export default function DashboardPreview() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
           <div>
             {isLoading ? (
-              <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5 text-sm text-white/60">
+              <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
                 Loading appointments...
               </div>
             ) : isError ? (
-              <div className="bg-[#1a1a1a] rounded-xl border border-[#dc2626]/30 p-5 text-sm text-[#ef4444]">
+              <div className="rounded-xl border border-destructive/30 bg-card p-5 text-sm text-destructive">
                 {error instanceof Error ? error.message : "Failed to load appointments."}
               </div>
             ) : (
