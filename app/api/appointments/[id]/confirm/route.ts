@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "../../../../../lib/supabaseServer";
+import { getSupabaseClient } from "../../../../../lib/supabaseServer";
 
 interface RouteContext {
   params: {
@@ -17,6 +17,8 @@ export async function POST(
   }
 
   try {
+    const supabase = getSupabaseClient();
+
     const { data, error } = await supabase
       .from("appointments")
       .update({ status: "CONFIRMED" })

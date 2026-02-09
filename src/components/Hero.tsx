@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
 
@@ -30,7 +30,7 @@ export function Hero() {
               {COPY.hero.cta}
             </Button>
             <Button variant="heroOutline" size="lg" asChild className="min-w-[200px] text-base">
-              <Link to="/dashboard-preview">
+              <Link href="/dashboard-preview">
                 {COPY.hero.secondaryCta}
                 <ArrowLeft className="mr-2 h-4 w-4" />
               </Link>

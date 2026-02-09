@@ -72,14 +72,29 @@ app/
 
 ---
 
-## Environment Variables
+## Environment Setup
 
-Create a `.env.local` (or runtime env vars) with:
+1. Copy the example file:
+
+```bash
+cp .env.example .env.local
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+2. Fill in values in `.env.local`:
 
 ```bash
 SUPABASE_URL=https://<your-project-id>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+NEXT_PUBLIC_SUPABASE_URL=
 ```
+
+`SUPABASE_SERVICE_ROLE_KEY` is a secret server key and must never be committed to git.
 
 ---
 

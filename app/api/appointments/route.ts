@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "../../../lib/supabaseServer";
+import { getSupabaseClient } from "../../../lib/supabaseServer";
 
 function getUtcDayRange(date: string): { start: string; end: string } {
   const startDate = new Date(`${date}T00:00:00.000Z`);
@@ -27,6 +27,8 @@ export async function GET(
   }
 
   try {
+    const supabase = getSupabaseClient();
+
     if (dateParam) {
       const range = getUtcDayRange(dateParam);
       const { data, error } = await supabase

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildAppointmentStartTime, processMessage } from "../../../../lib/stateMachine";
-import { supabase } from "../../../../lib/supabaseServer";
+import { getSupabaseClient } from "../../../../lib/supabaseServer";
 import type {
   AppointmentRow,
   Json,
@@ -83,6 +83,8 @@ export async function POST(
   const incomingBody = payload.body;
 
   try {
+    const supabase = getSupabaseClient();
+
     const { error: inMessageError } = await supabase.from("messages").insert({
       phone,
       direction: "IN",

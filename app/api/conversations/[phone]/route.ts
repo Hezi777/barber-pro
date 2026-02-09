@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "../../../../lib/supabaseServer";
+import { getSupabaseClient } from "../../../../lib/supabaseServer";
 
 interface RouteContext {
   params: {
@@ -21,6 +21,8 @@ export async function GET(
   }
 
   try {
+    const supabase = getSupabaseClient();
+
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
@@ -66,6 +68,8 @@ export async function DELETE(
   }
 
   try {
+    const supabase = getSupabaseClient();
+
     const { data, error } = await supabase
       .from("conversations")
       .update({

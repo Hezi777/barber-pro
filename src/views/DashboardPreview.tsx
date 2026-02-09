@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { ArrowRight, Clock, Users, CalendarCheck, Badge as BadgeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,7 @@ export default function DashboardPreview() {
             <Button variant="hero" size="sm">{COPY.dashboard.today}</Button>
             <Button variant="secondary" size="sm">{COPY.dashboard.tomorrow}</Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
+              <Link href="/">
                 <ArrowRight className="ml-1 h-4 w-4" />
                 חזרה
               </Link>
