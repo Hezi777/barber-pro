@@ -1,6 +1,9 @@
+"use client";
+
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 type Theme = "light" | "dark";
+const THEME_STORAGE_KEY = "barber-pro-theme";
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,20 +14,47 @@ const ThemeContext = createContext<ThemeContextType>({ theme: "light", toggleThe
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("barber-pro-theme") as Theme;
-      if (stored) return stored;
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    if (typeof window === "undefined") {
+      return "dark";
     }
-    return "light";
+
+    const root = document.documentElement;
+    if (root.classList.contains("dark")) {
+      return "dark";
+    }
+    if (root.classList.contains("light")) {
+      return "light";
+    }
+
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    localStorage.setItem("barber-pro-theme", theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== THEME_STORAGE_KEY) {
+        return;
+      }
+
+      if (event.newValue === "light" || event.newValue === "dark") {
+        setTheme(event.newValue);
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
 

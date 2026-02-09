@@ -1,180 +1,167 @@
-import Link from "next/link";
-import { ArrowRight, Clock, Users, CalendarCheck, Badge as BadgeIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { COPY } from "@/lib/copy";
+"use client";
 
-const MOCK_APPOINTMENTS = [
-  { time: "10:00", status: "booked", customer: "אבי לוי", service: "תספורת גברים" },
-  { time: "10:30", status: "booked", customer: "משה כהן", service: "תספורת + זקן" },
-  { time: "11:00", status: "booked", customer: "דוד ישראלי", service: "תספורת גברים" },
-  { time: "12:00", status: "booked", customer: "נדב רון", service: "תספורת ילדים" },
-  { time: "13:00", status: "free", customer: "", service: "" },
-  { time: "14:30", status: "booked", customer: "יוסי כהן", service: "תספורת גברים" },
-  { time: "16:00", status: "free", customer: "", service: "" },
-  { time: "16:30", status: "free", customer: "", service: "" },
-];
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import CalendarDayView, { type CalendarAppointment } from "@/components/CalendarDayView";
+import { SidebarSummary } from "@/components/dashboard/SidebarSummary";
+import { TopBar } from "@/components/dashboard/TopBar";
 
-const GAPS = ["16:00", "16:30"];
+interface AppointmentsResponse {
+  ok: boolean;
+  data?: CalendarAppointment[];
+  error?: string;
+}
+
+const START_HOUR = 8;
+const END_HOUR = 20;
+const SLOT_MINUTES = 30;
 
 export default function DashboardPreview() {
+  const [selectedDate, setSelectedDate] = useState(() => startOfLocalDay(new Date()));
+  const selectedDateKey = useMemo(() => formatDateForApi(selectedDate), [selectedDate]);
+
+  const {
+    data: appointments = [],
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["appointments", selectedDateKey],
+    queryFn: async (): Promise<CalendarAppointment[]> => {
+      const response = await fetch(`/api/appointments?date=${selectedDateKey}`, { cache: "no-store" });
+      const result = (await response.json()) as AppointmentsResponse;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error ?? "Failed to load appointments.");
+      }
+
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
+  });
+
+  const sortedAppointments = useMemo(
+    () =>
+      [...appointments].sort(
+        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+      ),
+    [appointments],
+  );
+
+  const visibleAppointments = useMemo(
+    () => sortedAppointments.filter((appointment) => appointment.status !== "CANCELED"),
+    [sortedAppointments],
+  );
+
+  const nextAppointment = useMemo(() => {
+    if (visibleAppointments.length === 0) {
+      return null;
+    }
+
+    if (isSameLocalDay(selectedDate, new Date())) {
+      const now = Date.now();
+      return (
+        visibleAppointments.find((appointment) => new Date(appointment.start_time).getTime() >= now) ?? null
+      );
+    }
+
+    return visibleAppointments[0] ?? null;
+  }, [visibleAppointments, selectedDate]);
+
+  const freeSlotSummary = useMemo(() => {
+    const totalSlots = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES;
+    const occupiedSlots = new Set<number>();
+
+    for (const appointment of visibleAppointments) {
+      const start = new Date(appointment.start_time);
+      const minutesOfDay = start.getHours() * 60 + start.getMinutes();
+      const slotIndex = Math.floor((minutesOfDay - START_HOUR * 60) / SLOT_MINUTES);
+
+      if (slotIndex >= 0 && slotIndex < totalSlots) {
+        occupiedSlots.add(slotIndex);
+      }
+    }
+
+    const freeSlots: number[] = [];
+    for (let slot = 0; slot < totalSlots; slot += 1) {
+      if (!occupiedSlots.has(slot)) {
+        freeSlots.push(slot);
+      }
+    }
+
+    const freeHours = freeSlots.length / 2;
+    const freeHoursLabel = Number.isInteger(freeHours) ? `${freeHours}` : freeHours.toFixed(1);
+    const upcomingFreeSlots = freeSlots.slice(0, 3).map((slot) => formatSlotTime(slot));
+
+    return { freeHoursLabel, upcomingFreeSlots };
+  }, [visibleAppointments]);
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container flex items-center justify-between py-4">
+    <div className="min-h-screen bg-[#0f0f0f] text-white">
+      <TopBar
+        selectedDate={selectedDate}
+        onRefresh={() => {
+          void refetch();
+        }}
+        isRefreshing={isFetching}
+      />
+
+      <main className="mx-auto max-w-[1450px] px-6 py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
           <div>
-            <h1 className="text-xl font-bold text-foreground">{COPY.dashboard.title}</h1>
-            <p className="text-xs text-muted-foreground">{COPY.dashboard.previewNote}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="hero" size="sm">{COPY.dashboard.today}</Button>
-            <Button variant="secondary" size="sm">{COPY.dashboard.tomorrow}</Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
-                <ArrowRight className="ml-1 h-4 w-4" />
-                חזרה
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container py-8">
-        {/* Summary cards */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <SummaryCard icon={CalendarCheck} label={COPY.dashboard.appointmentsToday} value="12" />
-          <SummaryCard icon={Clock} label={COPY.dashboard.freeSlots} value="4" />
-          <SummaryCard icon={Users} label={COPY.dashboard.nextAppointment} value="14:30" highlight />
-        </div>
-
-        {/* Next appointment */}
-        <div className="mb-8 rounded-2xl border-2 border-primary/20 bg-card p-6 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">{COPY.dashboard.nextAppointment}</p>
-              <p className="text-4xl font-extrabold text-foreground">14:30</p>
-              <p className="mt-1 font-medium text-foreground">יוסי כהן</p>
-              <p className="text-sm text-muted-foreground">תספורת גברים</p>
-              <p className="mt-2 text-xs text-primary font-medium">{COPY.dashboard.inMinutes}</p>
-            </div>
-            <div className="flex gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button variant="success" size="sm" disabled>
-                      {COPY.dashboard.confirmBtn}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{COPY.dashboard.previewOnly}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button variant="dangerOutline" size="sm" disabled>
-                      {COPY.dashboard.cancelBtn}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{COPY.dashboard.previewOnly}</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Timeline */}
-          <div className="lg:col-span-2">
-            <h2 className="mb-4 text-lg font-bold text-foreground">לוח תורים — היום</h2>
-            <div className="space-y-3">
-              {MOCK_APPOINTMENTS.map((apt, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm"
-                >
-                  <span className="min-w-[50px] text-lg font-bold text-foreground">{apt.time}</span>
-                  {apt.status === "booked" ? (
-                    <>
-                      <Badge variant="destructive" className="text-xs">
-                        {COPY.dashboard.booked}
-                      </Badge>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{apt.customer}</p>
-                        <p className="text-xs text-muted-foreground">{apt.service}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <Badge variant="secondary" className="text-xs text-success">
-                        {COPY.dashboard.available}
-                      </Badge>
-                      <p className="flex-1 text-sm text-muted-foreground">—</p>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5 text-sm text-white/60">
+                Loading appointments...
+              </div>
+            ) : isError ? (
+              <div className="bg-[#1a1a1a] rounded-xl border border-[#dc2626]/30 p-5 text-sm text-[#ef4444]">
+                {error instanceof Error ? error.message : "Failed to load appointments."}
+              </div>
+            ) : (
+              <CalendarDayView appointments={sortedAppointments} />
+            )}
           </div>
 
-          {/* Gaps card */}
-          <div>
-            <h2 className="mb-4 text-lg font-bold text-foreground">{COPY.dashboard.gapsTitle}</h2>
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <ul className="mb-4 space-y-2">
-                {GAPS.map((time) => (
-                  <li key={time} className="flex items-center gap-2 text-foreground">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{time}</span>
-                  </li>
-                ))}
-              </ul>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="block">
-                    <Button variant="heroOutline" size="sm" className="w-full" disabled>
-                      {COPY.dashboard.sendFill}
-                      <Badge variant="secondary" className="mr-2 text-xs">בקרוב</Badge>
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{COPY.dashboard.previewOnly}</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
+          <SidebarSummary
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            nextAppointment={nextAppointment}
+            totalAppointments={visibleAppointments.length}
+            freeHoursLabel={freeSlotSummary.freeHoursLabel}
+            upcomingFreeSlots={freeSlotSummary.upcomingFreeSlots}
+            loading={isLoading}
+          />
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  highlight,
-}: {
-  icon: typeof CalendarCheck;
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function formatDateForApi(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isSameLocalDay(a: Date, b: Date): boolean {
   return (
-    <div
-      className={`rounded-2xl border bg-card p-6 shadow-sm ${
-        highlight ? "border-primary/30" : "border-border"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${highlight ? "bg-primary/10" : "bg-muted"}`}>
-          <Icon className={`h-5 w-5 ${highlight ? "text-primary" : "text-muted-foreground"}`} />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold text-foreground">{value}</p>
-        </div>
-      </div>
-    </div>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
   );
+}
+
+function formatSlotTime(slotIndex: number): string {
+  const totalMinutes = START_HOUR * 60 + slotIndex * SLOT_MINUTES;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
